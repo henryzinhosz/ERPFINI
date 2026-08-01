@@ -1,0 +1,269 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the system with role-based access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity, matching Firebase Auth UID."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username for login."
+        },
+        "email": {
+            "type": "string",
+            "description": "User's email, used for Firebase Authentication.",
+            "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (admin, parkshopping, madureirashopping).",
+          "enum": ["admin", "parkshopping", "madureirashopping"]
+        },
+        "unitId": {
+          "type": "string",
+          "description": "Reference to the Unit the user is associated with. (e.g. 'Park Shopping')"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "role"
+      ]
+    },
+    "Unit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Unit",
+      "type": "object",
+      "description": "Represents a store unit (e.g., Park Shopping, Madureira Shopping).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Unit entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the unit (e.g., Park Shopping)."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Product": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Product",
+        "type": "object",
+        "description": "Represents a catalog product that can be stocked.",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "type": { "type": "string", "description": "The type of the product (Nacional or Importado).", "enum": ["Nacional", "Importado"] }
+        },
+        "required": ["id", "name", "type"]
+    },
+    "StockItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockItem",
+      "type": "object",
+      "description": "Represents an item in stock at a specific unit.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StockItem entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Denormalized name of the stock item (e.g., 'Chocolate')."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the item in stock."
+        },
+        "type": {
+          "type": "string",
+          "description": "Denormalized type of the stock item (e.g., 'Nacional', 'Importado')."
+        },
+        "unitId": {
+          "type": "string",
+          "description": "Reference to the Unit where the item is stocked. (e.g. 'Park Shopping')"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "quantity",
+        "type",
+        "unitId"
+      ]
+    },
+    "StockTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockTransaction",
+      "type": "object",
+      "description": "Represents a transaction that modifies the stock level of an item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StockTransaction entity."
+        },
+        "stockItemId": {
+          "type": "string",
+          "description": "Reference to the StockItem involved in the transaction."
+        },
+        "quantityChange": {
+          "type": "number",
+          "description": "The amount the stock level changed (positive for addition, negative for removal)."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the transaction.",
+          "format": "date-time"
+        },
+        "operatorName": {
+          "type": "string",
+          "description": "Name of the user who performed the transaction."
+        },
+        "action": {
+          "type": "string",
+          "description": "Type of action (e.g., 'Entrada', 'Saída', 'Perda').",
+          "enum": ["Entrada", "Saída", "Perda"]
+        },
+         "unitId": {
+          "type": "string",
+          "description": "Denormalized Unit ID for security rules."
+        }
+      },
+      "required": [
+        "id",
+        "stockItemId",
+        "quantityChange",
+        "date",
+        "operatorName",
+        "action",
+        "unitId"
+      ]
+    },
+    "CashFlowRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CashFlowRecord",
+      "type": "object",
+      "description": "Represents a record of cash flow, including sales and expenses.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "paymentMethod": { "type": "string", "description": "The name of the payment method, e.g., 'Pix'" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["Entrada", "Saída"] },
+        "description": { "type": "string" },
+        "unitId": { "type": "string", "description": "Denormalized Unit ID for security rules." },
+        "operatorId": { "type": "string" }
+      },
+      "required": [ "id", "date", "paymentMethod", "amount", "type", "unitId", "operatorId" ]
+    },
+    "ProductSaleRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProductSaleRecord",
+      "type": "object",
+      "description": "Represents a record of sales by product category.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "productCategory": { "type": "string", "description": "Name of the product category sold." },
+        "quantity": { "type": "number" },
+        "unitId": { "type": "string", "description": "Denormalized Unit ID for security rules." },
+        "operatorId": { "type": "string" }
+      },
+      "required": [ "id", "date", "productCategory", "quantity", "unitId", "operatorId" ]
+    },
+    "PaymentMethod": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentMethod",
+      "type": "object",
+      "description": "Represents a payment method (e.g., Dinheiro, Pix, Credito, Debito).",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": [ "id", "name" ]
+    },
+    "PaymentFee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentFee",
+      "type": "object",
+      "description": "Stores the percentage fee for a payment method at a specific unit.",
+      "properties": {
+        "id": { "type": "string" },
+        "unitId": { "type": "string", "description": "The ID of the store unit." },
+        "paymentMethod": { "type": "string", "enum": ["Credito", "Debito", "Pix"] },
+        "feePercentage": { "type": "number", "description": "The fee as a percentage, e.g., 1.99 for 1.99%." }
+      },
+      "required": [ "unitId", "paymentMethod", "feePercentage" ]
+    },
+     "FixedCost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FixedCost",
+      "type": "object",
+      "description": "Stores the monthly fixed costs for a specific unit.",
+      "properties": {
+        "id": { "type": "string" },
+        "unitId": { "type": "string", "description": "The ID of the store unit." },
+        "amount": { "type": "number", "description": "The monthly fixed cost amount." }
+      },
+      "required": [ "unitId", "amount" ]
+    },
+    "ProductCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProductCategory",
+      "type": "object",
+      "description": "Represents a user-defined category of product sold (e.g. candy, chocolate).",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": [ "id", "name" ]
+    },
+     "DailyMetric": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyMetric",
+      "type": "object",
+      "description": "Stores daily performance metrics for a specific unit.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "unitId": { "type": "string", "description": "The ID of the store unit." },
+        "averageTicket": { "type": "number", "description": "The average ticket value for the day." },
+        "numberOfSales": { "type": "number", "description": "The total number of sales transactions for the day." }
+      },
+      "required": ["id", "date", "unitId", "averageTicket", "numberOfSales"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      { "path": "/users/{userId}", "definition": { "schema": { "$ref": "#/entities/User" }, "description": "Stores user profiles." } },
+      { "path": "/units/{unitId}", "definition": { "schema": { "$ref": "#/entities/Unit" }, "description": "Stores store unit information." } },
+      { "path": "/products/{productId}", "definition": { "schema": { "$ref": "#/entities/Product" }, "description": "Global catalog of all products." } },
+      { "path": "/stock_items/{stockItemId}", "definition": { "schema": { "$ref": "#/entities/StockItem" }, "description": "Stores stock item information." } },
+      { "path": "/stock_transactions/{stockTransactionId}", "definition": { "schema": { "$ref": "#/entities/StockTransaction" }, "description": "Stores stock transaction records." } },
+      { "path": "/cash_flow_records/{cashFlowRecordId}", "definition": { "schema": { "$ref": "#/entities/CashFlowRecord" }, "description": "Stores cash flow records." } },
+      { "path": "/product_sale_records/{productSaleRecordId}", "definition": { "schema": { "$ref": "#/entities/ProductSaleRecord" }, "description": "Stores product sale records." } },
+      { "path": "/payment_methods/{paymentMethodId}", "definition": { "schema": { "$ref": "#/entities/PaymentMethod" }, "description": "Stores payment method configurations." } },
+      { "path": "/product_categories/{productCategoryId}", "definition": { "schema": { "$ref": "#/entities/ProductCategory" }, "description": "Stores product category configurations." } },
+      { "path": "/payment_fees/{paymentFeeId}", "definition": { "schema": { "$ref": "#/entities/PaymentFee" }, "description": "Stores fee percentages for payment methods." } },
+      { "path": "/fixed_costs/{fixedCostId}", "definition": { "schema": { "$ref": "#/entities/FixedCost" }, "description": "Stores monthly fixed costs for each unit." } },
+      { "path": "/daily_metrics/{dailyMetricId}", "definition": { "schema": { "$ref": "#/entities/DailyMetric" }, "description": "Stores daily performance metrics." } }
+    ]
+  }
+}

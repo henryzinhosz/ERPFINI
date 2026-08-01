@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserData().data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isUnitMember(unitId) {
+        return isSignedIn() && getUserData().data.unitId == unitId;
+    }
+
+    function canAccessUnitData(unitId) {
+        return isAdmin() || isUnitMember(unitId);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /units/{unitId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /payment_methods/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+    }
+    
+    match /product_categories/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
+    match /products/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
+    match /payment_fees/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
+    match /fixed_costs/{docId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /stock_items/{stockItemId} {
+      allow read: if isSignedIn() && canAccessUnitData(resource.data.unitId);
+      allow write: if isSignedIn() && canAccessUnitData(request.resource.data.unitId);
+    }
+
+    match /stock_transactions/{stockTransactionId} {
+        // READ/MODIFY: Allow if admin OR if they belong to the unit of the existing transaction.
+        allow get, list, update, delete: if isSignedIn() && canAccessUnitData(resource.data.unitId);
+        // CREATE: Allow if admin OR if they belong to the unit of the new transaction.
+        allow create: if isSignedIn() && canAccessUnitData(request.resource.data.unitId);
+    }
+
+    match /cash_flow_records/{cashFlowRecordId} {
+        // READ/MODIFY: Allow if admin OR if they belong to the unit of the existing record.
+        allow get, list, update, delete: if isSignedIn() && canAccessUnitData(resource.data.unitId);
+        // CREATE: Allow if admin OR if they belong to the unit of the new record.
+        allow create: if isSignedIn() && canAccessUnitData(request.resource.data.unitId);
+    }
+    
+    match /daily_metrics/{dailyMetricId} {
+        // READ/MODIFY: Allow if admin OR if they belong to the unit of the existing metric.
+        allow get, list, update, delete: if isSignedIn() && canAccessUnitData(resource.data.unitId);
+        // CREATE: Allow if admin OR if they belong to the unit of the new metric.
+        allow create: if isSignedIn() && canAccessUnitData(request.resource.data.unitId);
+    }
+
+    match /product_sale_records/{productSaleRecordId} {
+        // READ/MODIFY: Allow if admin OR if they belong to the unit of the existing record.
+        allow get, list, update, delete: if isSignedIn() && canAccessUnitData(resource.data.unitId);
+        // CREATE: Allow if admin OR if they belong to the unit of the new record.
+        allow create: if isSignedIn() && canAccessUnitData(request.resource.data.unitId);
+    }
+  }
+}
+
+    
